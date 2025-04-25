@@ -1,0 +1,16 @@
+.{
+    .name = .ClobberBackend,
+
+    .fingerprint = 0xdaf3bd105f0b978d,
+
+    .version = "0.0.1",
+
+    .dependencies = .{
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
