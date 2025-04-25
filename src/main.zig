@@ -9,5 +9,17 @@ pub fn main() !void {
         5,
     );
     defer state.deinit(allocator);
+    const outcomes = try state.outcomes(allocator, true);
+    defer {
+        for (outcomes.items) |item| {
+            item.deinit(allocator);
+        }
+        outcomes.deinit();
+    }
     state.debug_dump();
+    std.debug.print("\n", .{});
+    for (outcomes.items) |outcome| {
+        outcome.debug_dump();
+        std.debug.print("\n", .{});
+    }
 }
