@@ -1,10 +1,11 @@
 const std = @import("std");
+const lib = @import("lib.zig");
 
 pub const GameColor = enum {
     black,
     white,
 
-    pub fn asString(self: @This()) []const u8 {
+    pub fn toString(self: @This()) []const u8 {
         return switch (self) {
             .black => "black",
             else => "white",
@@ -47,17 +48,18 @@ pub const GameState = struct {
     pub fn move(
         self: @This(),
         allocator: std.mem.Allocator,
-        fromIndex: usize,
-        toIndex: usize,
+        from_index: usize,
+        to_index: usize,
     ) !@This() {
         var board = try allocator.dupe(?GameColor, self.board);
-        const fromPiece = board[fromIndex];
-        board[fromIndex] = null;
-        board[toIndex] = fromPiece;
+        const from_piece = board[from_index];
+        board[from_index] = null;
+        board[to_index] = from_piece;
+        const turn: GameColor = if (self.turn == .black) .white else .black;
         return @This(){
             .rows = self.rows,
             .columns = self.columns,
-            .turn = if (self.turn == .black) .white else .black,
+            .turn = turn,
             .board = board,
         };
     }
@@ -74,41 +76,34 @@ pub const GameState = struct {
             }
             output.deinit();
         }
-        for (0..self.rows) |pivotRow| {
-            for (0..self.columns) |pivotColumn| {
-                const indices = [_]?usize{
-                    if (pivotRow < self.rows - 1)
-                        (pivotRow + 1) * self.columns + (pivotColumn)
-                    else
-                        null,
+        for (0..self.rows) |pivot_row| {
+            for (0..self.columns) |pivot_column| {
+                const indices = lib.getNeighbors(
+                    pivot_row,
+                    pivot_column,
+                    self.rows,
+                    self.columns,
+                );
 
-                    if (pivotColumn < self.columns - 1)
-                        (pivotRow) * self.columns + (pivotColumn + 1)
-                    else
-                        null,
-
-                    if (pivotRow > 0)
-                        (pivotRow - 1) * self.columns + (pivotColumn)
-                    else
-                        null,
-
-                    if (pivotColumn > 0)
-                        (pivotRow) * self.columns + (pivotColumn - 1)
-                    else
-                        null,
-                };
-
-                const centerIndex = (pivotRow + 1) * self.columns + (pivotColumn + 1);
-                inline for (indices) |maybeMoveIndex| {
-                    if (maybeMoveIndex) |moveIndex| {
-                        if (self.board[moveIndex]) |piece| {
+                const center_index = (pivot_row + 1) * self.columns + (pivot_column + 1);
+                inline for (indices) |maybe_move_index| {
+                    if (maybe_move_index) |move_index| {
+                        if (self.board[move_index]) |piece| {
                             if (piece != self.turn) {
-                                const nextState = try self.move(allocator, centerIndex, moveIndex);
-                                try output.append(nextState);
+                                const next_state = try self.move(
+                                    allocator,
+                                    center_index,
+                                    move_index,
+                                );
+                                try output.append(next_state);
                             }
                         } else if (relaxed) {
-                            const nextState = try self.move(allocator, centerIndex, moveIndex);
-                            try output.append(nextState);
+                            const next_state = try self.move(
+                                allocator,
+                                center_index,
+                                move_index,
+                            );
+                            try output.append(next_state);
                         }
                     }
                 }
@@ -117,20 +112,20 @@ pub const GameState = struct {
         return output;
     }
 
-    pub fn debug_dump(self: @This()) void {
+    pub fn debugDump(self: @This()) void {
         for (0..self.rows) |row| {
             for (0..self.columns) |column| {
                 const index = row * self.columns + column;
-                const maybePiece = self.board[index];
-                const symbol: u8 = if (maybePiece) |piece|
-                    if (piece == GameColor.black) 'B' else 'W'
+                const maybe_piece = self.board[index];
+                const symbol: u8 = if (maybe_piece) |piece|
+                    if (piece == .black) 'B' else 'W'
                 else
                     '_';
                 std.debug.print("{c}", .{symbol});
             }
             std.debug.print("\n", .{});
         }
-        const color = self.turn.asString();
+        const color = self.turn.toString();
         std.debug.print("Current turn: {s}\n", .{color});
     }
 
