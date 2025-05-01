@@ -17,6 +17,13 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const zap = b.dependency("zap", .{
+        .target = target,
+        .optimize = optimize,
+        .openssl = false,
+    });
+    exe.root_module.addImport("zap", zap.module("zap"));
+
     exe.root_module.addImport("clobber", clobber);
 
     b.installArtifact(exe);

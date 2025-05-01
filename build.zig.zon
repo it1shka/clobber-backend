@@ -5,7 +5,12 @@
 
     .version = "0.0.1",
 
-    .dependencies = .{},
+    .dependencies = .{
+        .zap = .{
+            .url = "git+https://github.com/zigzap/zap?ref=v0.10.1#8d187310c7ee4f86faa7ef0ecdac0bf747216dea",
+            .hash = "zap-0.9.1-GoeB84M8JACjZKDNq2LA5hB24Z-ZrZ_HUKRXd8qxL2JW",
+        },
+    },
 
     .paths = .{
         "build.zig",
