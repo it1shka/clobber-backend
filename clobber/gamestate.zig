@@ -1,6 +1,14 @@
 const std = @import("std");
 const lib = @import("lib.zig");
 
+pub const MIN_ROWS = 3;
+pub const MIN_COLUMNS = 3;
+pub const MAX_ROWS = 10;
+pub const MAX_COLUMNS = 10;
+
+const board_size = MAX_ROWS * MAX_COLUMNS;
+const outcomes_size = board_size * 4;
+
 pub const GameColor = enum {
     black,
     white,
@@ -13,69 +21,51 @@ pub const GameColor = enum {
     }
 };
 
+pub const GameStateCreationError = error{
+    TooSmall,
+    TooLarge,
+};
+
 pub const GameState = struct {
     rows: usize,
     columns: usize,
     turn: GameColor,
-    board: []?GameColor,
+    board: [board_size]?GameColor,
 
-    pub fn init(
-        allocator: std.mem.Allocator,
-        rows: usize,
-        columns: usize,
-    ) !@This() {
-        if (rows < 3 or columns < 3) {
+    pub fn init(rows: usize, columns: usize) GameStateCreationError!@This() {
+        if (rows < MIN_ROWS or columns < MIN_COLUMNS) {
             return error.TooSmall;
         }
-        const board_size = rows * columns;
-        var board = try allocator.alloc(?GameColor, board_size);
+        if (rows > MAX_ROWS or columns > MAX_COLUMNS) {
+            return error.TooLarge;
+        }
+        var state = @This(){
+            .rows = rows,
+            .columns = columns,
+            .turn = .black,
+            .board = undefined,
+        };
         for (0..rows) |row| {
             for (0..columns) |column| {
                 const even = (column + (row % 2)) % 2 == 0;
                 const color: GameColor = if (even) .white else .black;
                 const index = row * columns + column;
-                board[index] = color;
+                state.board[index] = color;
             }
         }
-        return @This(){
-            .rows = rows,
-            .columns = columns,
-            .turn = .black,
-            .board = board,
-        };
+        return state;
     }
 
-    pub fn move(
-        self: @This(),
-        allocator: std.mem.Allocator,
-        from_index: usize,
-        to_index: usize,
-    ) !@This() {
-        var board = try allocator.dupe(?GameColor, self.board);
-        const from_piece = board[from_index];
-        board[from_index] = null;
-        board[to_index] = from_piece;
-        const turn: GameColor = if (self.turn == .black) .white else .black;
-        return @This(){
-            .rows = self.rows,
-            .columns = self.columns,
-            .turn = turn,
-            .board = board,
-        };
+    pub fn move(self: @This(), from_index: usize, to_index: usize) @This() {
+        var next_state = self;
+        next_state.board[from_index] = null;
+        next_state.board[to_index] = self.board[from_index];
+        next_state.turn = if (self.turn == .black) .white else .black;
+        return next_state;
     }
 
-    pub fn outcomes(
-        self: @This(),
-        allocator: std.mem.Allocator,
-        relaxed: bool,
-    ) !std.ArrayList(@This()) {
-        var output = std.ArrayList(@This()).init(allocator);
-        errdefer {
-            for (output.items) |item| {
-                item.deinit(allocator);
-            }
-            output.deinit();
-        }
+    pub fn outcomes(self: @This(), relaxed: bool) std.BoundedArray(@This(), outcomes_size) {
+        var output = std.BoundedArray(@This(), outcomes_size).init(0) catch unreachable;
         for (0..self.rows) |pivot_row| {
             for (0..self.columns) |pivot_column| {
                 const indices = lib.getNeighbors(
@@ -90,20 +80,18 @@ pub const GameState = struct {
                     if (maybe_move_index) |move_index| {
                         if (self.board[move_index]) |piece| {
                             if (piece != self.turn) {
-                                const next_state = try self.move(
-                                    allocator,
+                                const next_state = self.move(
                                     center_index,
                                     move_index,
                                 );
-                                try output.append(next_state);
+                                output.append(next_state) catch unreachable;
                             }
                         } else if (relaxed) {
-                            const next_state = try self.move(
-                                allocator,
+                            const next_state = self.move(
                                 center_index,
                                 move_index,
                             );
-                            try output.append(next_state);
+                            output.append(next_state) catch unreachable;
                         }
                     }
                 }
@@ -127,9 +115,5 @@ pub const GameState = struct {
         }
         const color = self.turn.toString();
         std.debug.print("Current turn: {s}\n", .{color});
-    }
-
-    pub fn deinit(self: @This(), allocator: std.mem.Allocator) void {
-        allocator.free(self.board);
     }
 };
