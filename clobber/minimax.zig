@@ -3,7 +3,6 @@ const gamestate = @import("gamestate.zig");
 const heuristic = @import("heuristic.zig");
 
 pub fn minimax(
-    allocator: std.mem.Allocator,
     state: gamestate.GameState,
     relaxed: bool,
     weights: heuristic.HeuristicWeights,
@@ -11,20 +10,14 @@ pub fn minimax(
     maximizing: bool,
     alpha: i32,
     beta: i32,
-) !i32 {
+) i32 {
     if (depth == 0) {
         return heuristic.heuristic(state, relaxed, weights);
     }
 
-    const possible_outcomes = try state.outcomes(allocator, relaxed);
-    defer {
-        for (possible_outcomes.items) |outcome| {
-            outcome.deinit(allocator);
-        }
-        possible_outcomes.deinit();
-    }
+    const possible_outcomes = state.outcomes(relaxed);
 
-    if (possible_outcomes.items.len == 0) {
+    if (possible_outcomes.len == 0) {
         return heuristic.heuristic(state, relaxed, weights);
     }
 
@@ -32,9 +25,8 @@ pub fn minimax(
     var running_beta = beta;
     var score: i32 = if (maximizing) std.math.minInt(i32) else std.math.maxInt(i32);
 
-    for (possible_outcomes.items) |outcome| {
-        const current_score = try minimax(
-            allocator,
+    for (possible_outcomes.slice()) |outcome| {
+        const current_score = minimax(
             outcome,
             relaxed,
             weights,
