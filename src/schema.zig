@@ -11,7 +11,7 @@ pub const GameStateSchema = struct {
     },
 
     pub fn toGameState(self: @This()) !clobber.gamestate.GameState {
-        var output = clobber.gamestate.GameState {
+        var output = clobber.gamestate.GameState{
             .rows = self.rows,
             .columns = self.columns,
             .turn = try clobber.gamestate.GameColor.fromString(self.turn),

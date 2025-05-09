@@ -4,6 +4,7 @@ const heuristic = @import("heuristic.zig");
 
 pub fn minimax(
     state: gamestate.GameState,
+    perspective: gamestate.GameColor,
     relaxed: bool,
     weights: heuristic.HeuristicWeights,
     depth: usize,
@@ -12,13 +13,13 @@ pub fn minimax(
     beta: i32,
 ) i32 {
     if (depth == 0) {
-        return heuristic.heuristic(state, relaxed, weights);
+        return heuristic.heuristic(state, perspective, relaxed, weights);
     }
 
     const possible_outcomes = state.outcomes(relaxed);
 
     if (possible_outcomes.len == 0) {
-        return heuristic.heuristic(state, relaxed, weights);
+        return heuristic.heuristic(state, perspective, relaxed, weights);
     }
 
     var running_alpha = alpha;
@@ -28,6 +29,7 @@ pub fn minimax(
     for (possible_outcomes.slice()) |outcome| {
         const current_score = minimax(
             outcome,
+            perspective,
             relaxed,
             weights,
             depth - 1,

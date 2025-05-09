@@ -16,10 +16,9 @@ pub fn handleEvaluate(r: zap.Request) !void {
             .{},
         ) catch break :normal_flow;
         defer parsed.deinit();
-        
+
         const relaxed = parsed.value.relaxed;
-        const game_state = parsed.value.state.toGameState()
-            catch break :normal_flow;
+        const game_state = parsed.value.state.toGameState() catch break :normal_flow;
         const eval_result = clobber.heuristic.computeWeights(
             game_state,
             relaxed,
@@ -54,9 +53,7 @@ pub fn handleMinimax(r: zap.Request) !void {
 
         // TODO:
         // const game_state = parsed.value.state.toGameState()
-            // catch break :normal_flow;
-
-
+        // catch break :normal_flow;
 
         return;
     }
