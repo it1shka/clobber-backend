@@ -6,12 +6,22 @@ pub const MIN_COLUMNS = 3;
 pub const MAX_ROWS = 10;
 pub const MAX_COLUMNS = 10;
 
-const board_size = MAX_ROWS * MAX_COLUMNS;
+pub const board_size = MAX_ROWS * MAX_COLUMNS;
 const outcomes_size = board_size * 4;
 
 pub const GameColor = enum {
     black,
     white,
+
+    pub fn fromString(rawColor: []const u8) !@This() {
+        if (std.mem.eql(u8, "black", rawColor)) {
+            return .black;
+        }
+        if (std.mem.eql(u8, "white", rawColor)) {
+            return .white;
+        }
+        return error.IllegalColor;
+    }
 
     pub fn toString(self: @This()) []const u8 {
         return switch (self) {
