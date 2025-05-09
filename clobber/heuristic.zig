@@ -6,11 +6,77 @@ pub const HeuristicWeights = struct {
     pieces_amount: i32,
     pieces_mobility: i32,
     attacking_potential: i32,
-    isolated_stones: i32,
-    centralization: f32,
+    isolated_stones_count: i32,
+    raw_centralization: f32,
+
+    pub fn zeroes() @This() {
+        var output: @This() = undefined;
+        inline for (std.meta.fields(@This())) |field| {
+            @field(output, field) = @as(@TypeOf(@field(output, field)), 0);
+        }
+        return output;
+    }
+
+    // getters (computed fields)
+    pub inline fn centralization(self: @This()) f32 {
+        return self.raw_centralization / @as(f32, @floatFromInt(self.pieces_amount));
+    }
+
+    pub inline fn isolated_stones(self: @This()) i32 {
+        return -self.isolated_stones_count;
+    }
+
+
+    // operations
+    pub fn add(self: @This(), other: @This()) @This() {
+        var output: @This() = undefined;
+        inline for (std.meta.fields(@This())) |field| {
+            @field(output, field) = @field(self, field) + @field(other, field);
+        }
+        return output;
+    }
+
+    pub fn times(self: @This(), other: @This()) @This() {
+         var output: @This() = undefined;
+        inline for (std.meta.fields(@This())) |field| {
+            @field(output, field) = @field(self, field) * @field(other, field);
+        }
+        return output;
+       
+    }
 };
 
-pub fn computeWeights(state: gamestate.GameState, relaxed: bool) HeuristicWeights {
+// TODO: 
+pub const Evaluator = struct {
+    state: gamestate.GameState,
+    perspective: gamestate.GameColor,
+    relaxed: bool,
+
+    main_acc: HeuristicWeights,
+    enemy_acc: HeuristicWeights,
+
+    pub fn init(
+        state: gamestate.GameState,
+        perspective: gamestate.GameColor,
+        relaxed: bool,
+    ) @This() {
+        return @This() {
+            .state = state,
+            .perspective = perspective,
+            .relaxed = relaxed,
+            .main_acc = HeuristicWeights.zeroes(),
+            .enemy_acc = HeuristicWeights.zeroes(),
+        };
+    }
+
+    // pub fn computeWeights(self: *@This(), )
+};
+
+pub fn computeWeights(
+    state: gamestate.GameState,
+    // perspective: gamestate.GameColor,
+    relaxed: bool,
+) HeuristicWeights {
     const center_row = @as(f32, @floatFromInt(state.rows - 1)) / 2.0;
     const center_column = @as(f32, @floatFromInt(state.columns - 1)) / 2.0;
 
@@ -21,6 +87,7 @@ pub fn computeWeights(state: gamestate.GameState, relaxed: bool) HeuristicWeight
         .isolated_stones = 0,
         .centralization = 0.0,
     };
+
     var local_piece_count: usize = 0;
     for (state.board, 0..) |maybe_piece, index| {
         const piece = maybe_piece orelse {
