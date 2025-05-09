@@ -27,6 +27,7 @@ pub const GameStateSchema = struct {
 
 pub const MinimaxSchema = struct {
     state: GameStateSchema,
+    perspective: []const u8,
     relaxed: bool,
     weights: clobber.heuristic.HeuristicWeights,
     depth: usize,
@@ -35,5 +36,7 @@ pub const MinimaxSchema = struct {
 
 pub const EvaluateSchema = struct {
     state: GameStateSchema,
+    perspective: []const u8,
     relaxed: bool,
+    weights: clobber.heuristic.HeuristicWeights,
 };

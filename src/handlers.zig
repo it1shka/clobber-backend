@@ -17,11 +17,16 @@ pub fn handleEvaluate(r: zap.Request) !void {
         ) catch break :normal_flow;
         defer parsed.deinit();
 
+        const state = parsed.value.state.toGameState() catch break :normal_flow;
+        const perspective = clobber.gamestate.GameColor.fromString(parsed.value.perspective) catch break :normal_flow;
         const relaxed = parsed.value.relaxed;
-        const game_state = parsed.value.state.toGameState() catch break :normal_flow;
-        const eval_result = clobber.heuristic.computeWeights(
-            game_state,
+        const weights = parsed.value.weights;
+
+        const eval_result = clobber.heuristic.evaluate(
+            state,
+            perspective,
             relaxed,
+            weights,
         );
 
         var json_result = std.ArrayList(u8).init(allocator);
@@ -51,10 +56,37 @@ pub fn handleMinimax(r: zap.Request) !void {
         ) catch break :normal_flow;
         defer parsed.deinit();
 
-        // TODO:
-        // const game_state = parsed.value.state.toGameState()
-        // catch break :normal_flow;
+        const state = parsed.value.state.toGameState() catch break :normal_flow;
+        const perspective = clobber.gamestate.GameColor.fromString(parsed.value.perspective) catch break :normal_flow;
+        const relaxed = parsed.value.relaxed;
+        const weights = parsed.value.weights;
+        const depth = parsed.value.depth;
+        const maximizing = parsed.value.maximizing;
 
+        var timer = try std.time.Timer.start();
+        const eval_result = clobber.minimax.minimax(
+            state,
+            perspective,
+            relaxed,
+            weights,
+            depth,
+            maximizing,
+            std.math.minInt(i32),
+            std.math.maxInt(i32),
+        );
+        const nanos = timer.read();
+
+        var json_result = std.ArrayList(u8).init(allocator);
+        defer json_result.deinit();
+        try std.json.stringify(
+            .{
+                .score = eval_result,
+                .nanos = nanos,
+            },
+            .{},
+            json_result.writer(),
+        );
+        try r.sendBody(json_result.items);
         return;
     }
 

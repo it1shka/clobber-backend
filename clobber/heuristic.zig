@@ -12,7 +12,7 @@ pub const HeuristicWeights = struct {
     pub fn zeroes() @This() {
         var output: @This() = undefined;
         inline for (std.meta.fields(@This())) |field| {
-            @field(output, field) = @as(@TypeOf(@field(output, field)), 0);
+            @field(output, field.name) = @as(@TypeOf(@field(output, field.name)), 0);
         }
         return output;
     }
@@ -33,7 +33,7 @@ pub const HeuristicWeights = struct {
         return (self.pieces_amount +
             self.pieces_mobility +
             self.attacking_potential +
-            @as(i32, @floor(self.centralization())) +
+            @as(i32, @intFromFloat(@floor(self.centralization()))) +
             self.isolated_stones());
     }
 
@@ -41,7 +41,7 @@ pub const HeuristicWeights = struct {
     pub fn add(self: @This(), other: @This()) @This() {
         var output: @This() = undefined;
         inline for (std.meta.fields(@This())) |field| {
-            @field(output, field) = @field(self, field) + @field(other, field);
+            @field(output, field.name) = @field(self, field.name) + @field(other, field.name);
         }
         return output;
     }
@@ -49,7 +49,7 @@ pub const HeuristicWeights = struct {
     pub fn minus(self: @This(), other: @This()) @This() {
         var output: @This() = undefined;
         inline for (std.meta.fields(@This())) |field| {
-            @field(output, field) = @field(self, field) - @field(other, field);
+            @field(output, field.name) = @field(self, field.name) - @field(other, field.name);
         }
         return output;
     }
@@ -57,7 +57,7 @@ pub const HeuristicWeights = struct {
     pub fn times(self: @This(), other: @This()) @This() {
         var output: @This() = undefined;
         inline for (std.meta.fields(@This())) |field| {
-            @field(output, field) = @field(self, field) * @field(other, field);
+            @field(output, field.name) = @field(self, field.name) * @field(other, field.name);
         }
         return output;
     }
@@ -128,19 +128,18 @@ pub const Evaluator = struct {
         const neighbors = lib.getNeighbors(row, column, self.state.rows, self.state.columns);
         var local_mobility: usize = 0;
         inline for (neighbors) |maybe_neighbor| {
-            const neighbor = maybe_neighbor or {
-                continue;
-            };
-            const maybe_neighbor_piece = self.state.board[neighbor];
-            if (maybe_neighbor_piece) |neighbor_piece| {
-                if (neighbor_piece != color) {
+            if (maybe_neighbor) |neighbor| {
+                const maybe_neighbor_piece = self.state.board[neighbor];
+                if (maybe_neighbor_piece) |neighbor_piece| {
+                    if (neighbor_piece != color) {
+                        local_mobility += 1;
+                        accumulator.pieces_mobility += 1;
+                        accumulator.attacking_potential += 1;
+                    }
+                } else if (self.relaxed) {
                     local_mobility += 1;
                     accumulator.pieces_mobility += 1;
-                    accumulator.attacking_potential += 1;
                 }
-            } else if (self.relaxed) {
-                local_mobility += 1;
-                accumulator.pieces_mobility += 1;
             }
         }
         if (local_mobility == 0) {

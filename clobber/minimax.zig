@@ -13,13 +13,13 @@ pub fn minimax(
     beta: i32,
 ) i32 {
     if (depth == 0) {
-        return heuristic.heuristic(state, perspective, relaxed, weights);
+        return heuristic.evaluate(state, perspective, relaxed, weights);
     }
 
     const possible_outcomes = state.outcomes(relaxed);
 
     if (possible_outcomes.len == 0) {
-        return heuristic.heuristic(state, perspective, relaxed, weights);
+        return heuristic.evaluate(state, perspective, relaxed, weights);
     }
 
     var running_alpha = alpha;
