@@ -3,7 +3,7 @@ const clobber = @import("clobber");
 const zap = @import("zap");
 const schema = @import("schema.zig");
 
-const invalid_body_message = "{ message: \"Invalid body\" }";
+const invalid_body_message = "{ \"message\": \"Invalid body\" }";
 
 pub fn handleEvaluate(r: zap.Request) !void {
     const allocator = std.heap.c_allocator;

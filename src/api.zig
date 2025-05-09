@@ -26,11 +26,11 @@ fn handleRequest(r: zap.Request) !void {
         }
 
         r.setStatus(.not_found);
-        r.sendBody("{ message: \"Unknown action\" }") catch break :normal_flow;
+        r.sendBody("{ \"message\": \"Unknown action\" }") catch break :normal_flow;
         return;
     }
     r.setStatus(.internal_server_error);
-    r.sendBody("{ message: \"Internal server error\" }") catch return;
+    r.sendBody("{ \"message\": \"Internal server error\" }") catch return;
 }
 
 pub fn launchServer() !void {
@@ -45,7 +45,7 @@ pub fn launchServer() !void {
     std.debug.print("Listening on 0.0.0.0:{}\n", .{port});
 
     zap.start(.{
-        .threads = 2,
-        .workers = 1,
+        .threads = 4,
+        .workers = 4,
     });
 }
