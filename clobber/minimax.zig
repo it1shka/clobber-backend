@@ -12,13 +12,13 @@ pub fn minimax(
     alpha: i32,
     beta: i32,
 ) i32 {
-    if (depth == 0) {
-        return heuristic.evaluate(state, perspective, relaxed, weights);
-    }
-
     const possible_outcomes = state.outcomes(relaxed);
 
     if (possible_outcomes.len == 0) {
+        return if (state.turn == perspective) std.math.minInt(i32) else std.math.maxInt(i32);
+    }
+
+    if (depth == 0) {
         return heuristic.evaluate(state, perspective, relaxed, weights);
     }
 

@@ -16,7 +16,7 @@ pub const MinimaxProps = struct {
     maximizing: bool,
 
     fn evolve(self: @This(), nextState: gamestate.GameState) @This() {
-        return @This() {
+        return @This(){
             .state = nextState,
             .perspective = self.perspective,
             .relaxed = self.relaxed,
@@ -35,9 +35,9 @@ pub const Evaluator = struct {
 
     const minimum = std.math.minInt(i32);
     const maximum = std.math.maxInt(i32);
-    
+
     pub fn init(kind: MinimaxKind) @This() {
-        return @This() {
+        return @This(){
             .kind = kind,
             .visited_nodes = 0,
             .prunings = 0,
@@ -50,9 +50,8 @@ pub const Evaluator = struct {
         var clock = std.time.Timer.start() catch {
             clock_supported = false;
         };
-        const output = 
-            if (self.kind == .Unoptimized) self.minimax(props)
-            else self.minimaxABP(props, minimum, maximum);
+        const output =
+            if (self.kind == .Unoptimized) self.minimax(props) else self.minimaxABP(props, minimum, maximum);
         if (clock_supported) {
             self.elapsed_time = clock.read();
         }
@@ -65,17 +64,12 @@ pub const Evaluator = struct {
     ) i32 {
         self.visited_nodes += 1;
 
-        if (props.depth == 0) {
-            return heuristic.evaluate(
-                props.state,
-                props.perspective,
-                props.relaxed,
-                props.weights,
-            );
-        }
-        
         const possible_outcomes = props.state.outcomes(props.relaxed);
         if (possible_outcomes.len == 0) {
+            return if (props.state.turn == props.perspective) minimum else maximum;
+        }
+
+        if (props.depth == 0) {
             return heuristic.evaluate(
                 props.state,
                 props.perspective,
@@ -85,8 +79,7 @@ pub const Evaluator = struct {
         }
 
         var total_score: i32 =
-            if (props.maximizing) minimum
-            else maximum;
+            if (props.maximizing) minimum else maximum;
 
         for (possible_outcomes.slice()) |outcome| {
             const next_props = props.evolve(outcome);
@@ -109,6 +102,11 @@ pub const Evaluator = struct {
     ) i32 {
         self.visited_nodes += 1;
 
+        const possible_outcomes = props.state.outcomes(props.relaxed);
+        if (possible_outcomes.len == 0) {
+            return if (props.state.turn == props.perspective) minimum else maximum;
+        }
+
         if (props.depth == 0) {
             return heuristic.evaluate(
                 props.state,
@@ -117,22 +115,11 @@ pub const Evaluator = struct {
                 props.weights,
             );
         }
-        
-        const possible_outcomes = props.state.outcomes(props.relaxed);
-        if (possible_outcomes.len == 0) {
-            return heuristic.evaluate(
-                props.state,
-                props.perspective,
-                props.relaxed,
-                props.weights,
-            );
-        }
-        
+
         var running_alpha = alpha;
         var running_beta = beta;
         var total_score: i32 =
-            if (props.maximizing) minimum 
-            else maximum;
+            if (props.maximizing) minimum else maximum;
         for (possible_outcomes.slice()) |outcome| {
             const next_props = props.evolve(outcome);
             const current_score = self.minimaxABP(
