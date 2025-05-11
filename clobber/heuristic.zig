@@ -22,7 +22,8 @@ pub const HeuristicWeights = struct {
         if (self.pieces_amount <= 0) {
             return 0;
         }
-        return self.raw_centralization / @as(f32, @floatFromInt(self.pieces_amount));
+        const average = self.raw_centralization / @as(f32, @floatFromInt(self.pieces_amount));
+        return -average;
     }
 
     pub inline fn isolated_stones(self: @This()) i32 {
