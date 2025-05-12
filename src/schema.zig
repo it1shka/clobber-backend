@@ -1,3 +1,4 @@
+const std = @import("std");
 const clobber = @import("clobber");
 
 pub const GameStateSchema = struct {
@@ -39,4 +40,14 @@ pub const EvaluateSchema = struct {
     perspective: []const u8,
     relaxed: bool,
     weights: clobber.heuristic.HeuristicWeights,
+};
+
+pub const MinimaxVerboseSchema = struct {
+    kind: []const u8,
+    state: GameStateSchema,
+    perspective: []const u8,
+    relaxed: bool,
+    weights: clobber.heuristic.HeuristicWeights,
+    depth: usize,
+    maximizing: bool,
 };

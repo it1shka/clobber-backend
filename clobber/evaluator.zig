@@ -46,13 +46,10 @@ pub const Evaluator = struct {
     }
 
     pub fn evaluate(self: *@This(), props: MinimaxProps) i32 {
-        var clock_supported = true;
-        var clock = std.time.Timer.start() catch {
-            clock_supported = false;
-        };
+        var maybe_clock: ?std.time.Timer = std.time.Timer.start() catch null;
         const output =
             if (self.kind == .Unoptimized) self.minimax(props) else self.minimaxABP(props, minimum, maximum);
-        if (clock_supported) {
+        if (maybe_clock) |*clock| {
             self.elapsed_time = clock.read();
         }
         return output;
