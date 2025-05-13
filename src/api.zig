@@ -23,6 +23,10 @@ fn handleRequest(r: zap.Request) !void {
                 handlers.handleMinimax(r) catch break :normal_flow;
                 return;
             }
+            if (std.mem.eql(u8, "/minimax-verbose", path)) {
+                handlers.handleVerboseMinimax(r) catch break :normal_flow;
+                return;
+            }
         }
 
         r.setStatus(.not_found);
